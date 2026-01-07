@@ -1,412 +1,74 @@
-# 🎰 Vegas Casino - Observability Hackathon Project
-
-A comprehensive microservices-based casino application designed for **observability hackathons** where attendees improve instrumentation, observability pipelines, and feature flag management.
-
-> 📚 **Full Documentation**: Serve the [MkDocs website](docs/index.md) locally with `make docs-serve` or build it with `make docs-build` for complete documentation, architecture details, and deployment guides.
-
-## 🎮 Games Available
-
-The Vegas Casino features four different games, each implemented in different programming languages:
-
-### 🎰 Slots (Node.js)
-- **Port**: 8081 (HTTP), 50051 (gRPC)
-- **Features**: Progressive jackpot, bonus rounds, cheat detection
-- **Technology**: Node.js/Express with gRPC support
-
-### 🔴 Roulette (Python)
-- **Port**: 8082 (HTTP), 50052 (gRPC)
-- **Features**: European roulette, multiple bet types, live wheel simulation, cheat codes
-- **Technology**: Python/Flask with gRPC support
-
-### 🎲 Dice (Go)
-- **Port**: 8083 (HTTP), 50053 (gRPC)
-- **Features**: Craps-style dice game, pass-line and come bets
-- **Technology**: Go with gRPC support
-
-### 🃏 Blackjack (Node.js)
-- **Port**: 8084 (HTTP), 50054 (gRPC)
-- **Features**: Traditional blackjack, double down, insurance, surrender options
-- **Technology**: Node.js/Express with gRPC support
-
-## 🚩 Feature Flags
-
-The application uses **OpenFeature** with **flagd** for feature flag management. Feature flags are configured per game and can be toggled dynamically without redeploying services.
-
-### Slots Feature Flags
-- **`slots.progressive-jackpot`**: Enable/disable progressive jackpot functionality
-- **`slots.bonus-rounds`**: Enable/disable bonus round features
-- **`slots.cheat-detection`**: Enable/disable cheat detection system
-
-### Roulette Feature Flags
-- **`roulette.multiple-bets`**: Allow multiple simultaneous bets
-- **`roulette.live-wheel`**: Enable live wheel animation
-- **`roulette.cheat-detection`**: Enable cheat codes (ball control, wheel bias, etc.)
-
-### Blackjack Feature Flags
-- **`blackjack.double-down`**: Enable double down option
-- **`blackjack.insurance`**: Enable insurance bets
-- **`blackjack.surrender`**: Enable surrender option
-
-### Dice Feature Flags
-- **`dice.pass-line`**: Enable pass-line bets
-- **`dice.come-bets`**: Enable come bets
-
-All feature flags are managed via Kubernetes Custom Resources (`FeatureFlag` and `FeatureFlagSource`) and automatically injected via the OpenFeature Operator.
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Frontend Service                       │
-│                    (Node.js/Express)                       │
-│                  Port: 3000 (HTTP)                         │
-│              Browser-side OpenTelemetry                    │
-└──────────────┬──────────────────────────────────────────────┘
-               │
-               ├──────────────────────────────────────┐
-               │                                      │
-               ▼                                      ▼
-    ┌──────────────────┐                  ┌──────────────────┐
-    │  Game Services   │                  │  Dashboard Service│
-    │                  │                  │  (Node.js)       │
-    │  • Slots (Node)  │                  │  Port: 3001      │
-    │  • Roulette (Py)│                  └────────┬──────────┘
-    │  • Dice (Go)     │                           │
-    │  • Blackjack (N) │                           │
-    │                  │                           │
-    │  + flagd sidecar │                           │
-    │  + OpenTelemetry │                           │
-    └────────┬─────────┘                           │
-             │                                     │
-             │                                     │
-             ▼                                     ▼
-    ┌──────────────────┐                  ┌──────────────────┐
-    │   Redis Cache    │                  │ Scoring Service  │
-    │   (State Store)  │                  │  (Java/Spring)   │
-    │   Port: 6379     │                  │  Port: 8085      │
-    └──────────────────┘                  └────────┬──────────┘
-                                                   │
-                                                   ▼
-                                          ┌──────────────────┐
-                                          │   PostgreSQL      │
-                                          │   (Database)      │
-                                          │   Port: 5432      │
-                                          └──────────────────┘
-```
-
-### Key Components
-
-- **Frontend Service**: Web UI, user management, game selection
-- **Game Services**: Four independent microservices (Slots, Roulette, Dice, Blackjack)
-- **Scoring Service**: Leaderboards, game statistics, score tracking
-- **Dashboard Service**: Analytics and reporting dashboard
-- **Redis**: Game state storage and session management
-- **PostgreSQL**: Persistent storage for scores and game results
-- **OpenTelemetry Collector**: Receives and exports telemetry data
-- **OpenFeature Operator**: Manages flagd sidecar injection
+# :tada: :tada: Welcome to your new Project on GitHub :tada: :tada:
 
-### Communication Patterns
+> **Note**
+> This product is not officially supported by Dynatrace!
 
-- **gRPC**: Primary communication between frontend and game services
-- **HTTP**: RESTful APIs for dashboard, scoring, and fallback communication
-- **Redis**: State management and caching
-- **PostgreSQL**: Persistent data storage
+Congratulations, your project on GitHub was successfully created and you can start your Open Source Adventure!
 
-## 🛠️ Building the Project
+As each adventure starts with good preparations, we also have something we would like you to do upe front.
 
-The project uses **Make** for build automation. All Docker images can be built individually or all at once.
+- [ ] Read this ReadMe carefully, to get an overview of the files within your project.
+- [ ] Write your own ReadMe which reflects your project
+- [ ] Check if the [default community files](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file)(CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md, ..) within the organization `.github`[-project](https://github.com/dynatrace-oss/.github/) match your project's needs. If not, you can always provide your own, but we kindly ask you, that you also update those from time to time.
+- [ ] Check if there is a `LICENSE` file within your project. If not, please create one containing the `Apache License 2.0`.
+- [ ] Explicitly state that this project is not officially supported by Dynatrace in your ReadMe, eg. by using following lines on top of your ReadMe:
 
-### Prerequisites
+    > **Note**
+    > This product is not officially supported by Dynatrace!
 
-- **Docker** or **Podman** installed
-- **Make** installed
-- **Access to container registry** (optional, for pushing images)
+## How can I make my project public?
 
-### Build Configuration
+At first, the project will be private, as we (OSPO) want to ensure that you followed the guidelines and that everything is in place.
 
-Configure build settings in the Makefile or via environment variables:
+As soon as you are done with your initial commits, you can inform OSPO and we will take a close look at the project, and set it to public if we do think all guidelines are followed.
 
-```bash
-export REGISTRY=hrexed/vegasapp
-export IMAGE_TAG=0.11
-export BUILDER=podman  # or docker
-```
+There is also some automation running, which will set projects, which do not follow the guidelines, to private.
 
-### Build Individual Services
+## Provided Tools
 
-```bash
-# Build frontend
-make docker-build-frontend
+### Markdownlint
 
-# Build game services
-make docker-build-slots
-make docker-build-roulette
-make docker-build-dice
-make docker-build-blackjack
+To make it easier for the project to keep the Markdown files in a good shape, we added `markdownlint-cli` to the project.
 
-# Build supporting services
-make docker-build-scoring
-make docker-build-dashboard
+1. with a `makefile` for easier execution locally, based on docker images, so it can be used in every environment as long as `docker` and `make` are available.
+1. with a workflow for pull request verification based on the `makefile`.
 
-# Build testing tools
-make docker-build-playwright
-make docker-build-k6
-```
+The following files are part of this integration:
 
-### Build All Services
+- `makefile`: as it contains the targets for execution
+- `.markdownlint.yml`: as it contains the configuration for `markdownlint-cli`
+- `.github/workflows/makefile.yml`: as it contains the GitHub Action configuration
 
-```bash
-make docker-build-all
-```
+## Licensing
 
-This builds images for:
-- Frontend
-- Slots, Roulette, Dice, Blackjack
-- Scoring
-- Dashboard
-- Playwright
-- k6
+We are using Apache License 2.0 as our default.
 
-### Push Images
+### Source Code Headers
 
-```bash
-# Push all images
-make docker-push-all
+Every file containing source code must include copyright and license
+information. This includes any JS/CSS files that you might be serving out to
+browsers. (This is to help well-intentioned people avoid accidental copying that
+doesn't comply with the license.)
 
-# Or push individual images
-make docker-push-frontend
-make docker-push-slots
-# ... etc
-```
+Apache header:
 
-### Image Naming
+    Copyright 2022 Dynatrace LLC
 
-Images follow the pattern: `{REGISTRY}-{service}:{IMAGE_TAG}`
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-Example: `hrexed/vegasapp-frontend:0.11`
+        https://www.apache.org/licenses/LICENSE-2.0
 
-## 🚀 Deployment with Helm
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
-The application is deployed to Kubernetes using **Helm charts**. The deployment includes all services, databases, and supporting infrastructure.
+## Additional Questions/Remarks
 
-### Prerequisites
+If you do have additional questions/remarks, feel free to reach out to OSPO, either via slack or email.
 
-Before deploying, ensure you have:
-
-- ✅ **Kubernetes cluster** (v1.24+)
-- ✅ **kubectl** configured
-- ✅ **Helm 3.x** installed
-- ✅ **OpenFeature Operator** installed (⚠️ **REQUIRED FIRST!**)
-- ✅ **Gateway API** installed (for ingress)
-- ✅ **Docker images** built and pushed to registry
-
-### Step 1: Install OpenFeature Operator
-
-**⚠️ CRITICAL**: The OpenFeature Operator **must be installed BEFORE** deploying the application.
-
-```bash
-# Add Helm repository
-helm repo add openfeature https://open-feature.github.io/open-feature-operator
-helm repo update
-
-# Install operator
-helm install open-feature-operator openfeature/open-feature-operator \
-  --namespace open-feature-system \
-  --create-namespace \
-  --wait
-
-# Verify installation
-kubectl get pods -n open-feature-system
-```
-
-### Step 2: Install Gateway API (if not already installed)
-
-```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
-```
-
-### Step 3: Deploy Application
-
-```bash
-# Install with default values
-helm install vegas-casino ./helm/vegas-casino
-
-# Or with custom configuration
-helm install vegas-casino ./helm/vegas-casino \
-  --set global.imageTag=0.11 \
-  --set frontend.replicaCount=2 \
-  --set k6.enabled=true \
-  --set playwright.enabled=true
-```
-
-### Step 4: Verify Deployment
-
-```bash
-# Check all resources
-kubectl get all -n vegas-casino
-
-# Check pods
-kubectl get pods -n vegas-casino
-
-# Check services
-kubectl get svc -n vegas-casino
-
-# Check Gateway
-kubectl get gateway -n vegas-casino
-kubectl get httproute -n vegas-casino
-```
-
-### Accessing the Application
-
-```bash
-# Get external IP
-kubectl get gateway vegas-casino-gateway -n vegas-casino \
-  -o jsonpath='{.status.addresses[0].value}'
-
-# Access frontend
-curl http://<EXTERNAL_IP>/
-
-# Access dashboard
-curl http://<EXTERNAL_IP>/dashboard
-```
-
-### Configuration
-
-Edit `helm/vegas-casino/values.yaml` or use `--set` flags:
-
-```yaml
-global:
-  imageRegistry: hrexed/vegasapp
-  imageTag: "0.11"
-
-frontend:
-  enabled: true
-  replicaCount: 2
-
-opentelemetry:
-  enabled: true
-  exporter:
-    endpoint: "otel-collector.default.svc.cluster.local:4317"
-    protocol: "grpc"
-
-openfeature:
-  enabled: true
-
-k6:
-  enabled: false
-  vus: "10"
-  duration: "5m"
-
-playwright:
-  enabled: false
-  runContinuously: "false"
-  iterations: "1"
-```
-
-### Upgrade Deployment
-
-```bash
-helm upgrade vegas-casino ./helm/vegas-casino \
-  --set global.imageTag=0.12
-```
-
-### Rollback
-
-```bash
-# List revisions
-helm history vegas-casino
-
-# Rollback to previous version
-helm rollback vegas-casino
-```
-
-### Uninstall
-
-```bash
-helm uninstall vegas-casino
-```
-
-**Note**: This does NOT uninstall the OpenFeature Operator.
-
-## 📊 Observability
-
-The application is fully instrumented with **OpenTelemetry**:
-
-- **Distributed Tracing**: End-to-end trace correlation across all services
-- **Metrics**: Application and business metrics
-- **Logging**: Structured JSON logging
-- **Feature Flag Tracing**: Feature flag evaluations are traced
-- **Database Instrumentation**: Redis and PostgreSQL operations are instrumented
-
-### OpenTelemetry Configuration
-
-- **Protocol**: gRPC (OTLP)
-- **Endpoint**: `otel-collector.default.svc.cluster.local:4317`
-- **Export**: Automatic via OpenTelemetry SDKs
-
-## 🧪 Testing
-
-The project includes two types of automated testing:
-
-### Playwright (E2E Automation)
-- Simulates complete user journeys
-- Tests all games, feature flags, and dashboard
-- Configurable via Helm values
-
-### k6 (Load Testing)
-- Performance and scalability testing
-- Configurable virtual users and duration
-- Generates realistic traffic and traces
-
-See the [Testing Documentation](docs/testing/index.md) for details.
-
-## 📚 Documentation
-
-Comprehensive documentation is available via **MkDocs**:
-
-```bash
-# Serve documentation locally
-make docs-serve
-
-# Build static documentation
-make docs-build
-```
-
-Documentation includes:
-- Architecture details
-- Component descriptions
-- Build instructions
-- Deployment guides
-- Testing guides
-- Feature flag management
-
-## 🎯 Hackathon Objectives
-
-This project is designed for **observability hackathons** where attendees will:
-
-1. **Improve Instrumentation**: Add and enhance OpenTelemetry spans
-2. **Optimize Pipelines**: Configure and tune observability data pipelines
-3. **Implement Feature Flags**: Integrate and manage feature flags
-4. **Enhance Testing**: Create and run load tests
-5. **Practice Deployment**: Deploy and manage in Kubernetes
-
-## 🛠️ Technology Stack
-
-- **Languages**: Node.js, Python, Go, Java
-- **Frameworks**: Express.js, Flask, Spring Boot
-- **Databases**: Redis, PostgreSQL
-- **Observability**: OpenTelemetry, OpenFeature
-- **Orchestration**: Kubernetes, Helm
-- **Testing**: Playwright, k6
-
-## 📝 License
-
-This project is designed for educational and hackathon purposes.
-
-## 🤝 Contributing
-
-See [Contributing Guide](docs/contributing.md) for details on how to contribute to the project.
-
----
-
-**Ready to get started?** Serve the documentation locally with `make docs-serve` or start with [Building the Project](#-building-the-project)!
+If you think this template did not solve all your problems, please also let us know, either with a message or a pull request.
+Together we can improve this template to make it easier for our future projects.
