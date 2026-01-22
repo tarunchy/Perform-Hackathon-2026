@@ -1,6 +1,6 @@
-# Dynatrace Challenge 02 - Improve your OpenTelemetry instrumentation
+# Improve your OpenTelemetry instrumentation
 
-[< Previous Challenge](./DTChallenge-01.md) - **[Home](../README.md)** - [Next Challenge >](./Challenge-03.md)
+[< Previous Challenge](./DTChallenge-01.md) - **[Home](../index.md)** - [Next Challenge >](./DTChallenge-03.md)
 
 ## Introduction
 

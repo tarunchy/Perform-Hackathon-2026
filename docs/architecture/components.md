@@ -213,5 +213,5 @@
 
 ---
 
-**Next**: Learn about the [Technology Stack](technology.md) or start [Building](../development/building.md).
+**Next**: Learn about the [Technology Stack](technology.md) or explore [Development](../development/source-code.md).
 

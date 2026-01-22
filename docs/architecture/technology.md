@@ -142,5 +142,5 @@
 
 ---
 
-**Next**: Learn how to [Build the Project](../development/building.md) or explore [Testing](../testing/index.md).
+**Next**: Learn about [Source Code Locations](../development/source-code.md) or explore [Development Workflow](../development/github-actions.md).
 

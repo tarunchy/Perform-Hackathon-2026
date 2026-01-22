@@ -1,6 +1,6 @@
-# Dynatrace Challenge 00 - Launching your 
+#  Launching your Environment
 
-**[Home](../README.md)** - [Next Challenge >](./DTChallenge-01.md)
+**[Home](../index.md)** - [Next Challenge >](./DTChallenge-01.md)
 
 ## Pre-requisites
 

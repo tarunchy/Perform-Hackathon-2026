@@ -561,9 +561,12 @@ flagd:
           "false": false
     # Casino-wide feature flags (not displayed in UI)
     casino:
+      # House Advantage Mode: When enabled, reduces win probability across all games
+      # to protect casino profits. This is a backend-only control for casino managers.
+      # Use with caution as it affects all games (Slots, Roulette, Dice, Blackjack).
       house-advantage:
         state: "ENABLED"
-        defaultVariant: "false"
+        defaultVariant: "false"  # Set to "true" to enable house advantage mode
         variants:
           "true": true
           "false": false

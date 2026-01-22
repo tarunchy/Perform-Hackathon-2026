@@ -1,6 +1,6 @@
-# Challenge 01 - Introduction to GitHub Copilot
+#  Introduction to GitHub Copilot
 
-[< Previous Challenge](./Challenge-00.md) - **[Home](../README.md)** - [Next Challenge >](./Challenge-02.md)
+**[Home](../index.md)** - [Next Challenge >](./Challenge-02.md)
 
 ## Pre-requisites
 

@@ -1,6 +1,6 @@
-# Dynatrace Challenge 02 - Improve your Dynatrace Setup
+#  Improve your Dynatrace Setup
 
-[< Previous Challenge](./DTChallenge-02.md) - **[Home](../README.md)** - [Next Challenge >](./Challenge-04.md)
+[< Previous Challenge](./DTChallenge-02.md) - **[Home](../index.md)** - [Bonus Challenge >](./DTChallenge-04.md)
 
 ## Introduction
 

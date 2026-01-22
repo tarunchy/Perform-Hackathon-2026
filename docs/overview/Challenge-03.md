@@ -1,6 +1,6 @@
-# Challenge 03 - Extending GitHub Copilot with Model Context Protocol
+#  Extending GitHub Copilot with Model Context Protocol
 
-[< Previous Challenge](./Challenge-02.md) - **[Home](../README.md)** - [Next Challenge >](./Challenge-04.md)
+[< Previous Challenge](./Challenge-02.md) - **[Home](../index.md)** - [Next: Dynatrace Challenge 00 >](./DTChallenge-00.md) | [Bonus Challenge >](./Challenge-04.md)
 
 ## Introduction
 GitHub Copilot is a powerful coding assistant, but what if you could make it even smarter by connecting it to external tools, databases, or APIs? This challenge introduces you to the Model Context Protocol (MCP), which allows you to extend Copilot's capabilities by integrating both custom context sources and tools. 

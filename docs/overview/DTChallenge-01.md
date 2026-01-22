@@ -1,6 +1,6 @@
-# Dynatrace Challenge 01 - Prompt your observability data
+#  Prompt your observability data
 
-[< Previous Challenge](./DTChallenge-00.md) - **[Home](../README.md)** - [Next Challenge >](./Challenge-02.md)
+[< Previous Challenge](./DTChallenge-00.md) - **[Home](../index.md)** - [Next Challenge >](./DTChallenge-02.md)
 
 ## Introduction
 

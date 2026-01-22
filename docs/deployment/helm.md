@@ -36,8 +36,8 @@ Edit `helm/vegas-casino/values.yaml` or use `--set` flags:
 
 ```yaml
 global:
-  imageRegistry: hrexed/vegasapp
-  imageTag: "0.39"
+  imageRegistry: ghcr.io/hrexed/vegasapp
+  imageTag: "latest"
   namespace: vegas-casino
 
 frontend:

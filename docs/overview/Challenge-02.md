@@ -1,6 +1,6 @@
-# Challenge 02 - Best Practices When Using Copilot
+# Best Practices When Using Copilot
 
-[< Previous Challenge](./Challenge-01.md) - **[Home](../README.md)** - [Next Challenge >](./Challenge-03.md)
+[< Previous Challenge](./Challenge-01.md) - **[Home](../index.md)** - [Next Challenge >](./Challenge-03.md)
 
 ## Introduction
 Having explored GitHub Copilot's capabilities, it's time to dive deeper and refine your approach. This challenge will not only focus on adopting best practices for effective interaction with Copilot but also apply these strategies to integrate a new feature into your Whack-a-Mole game.

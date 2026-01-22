@@ -1,142 +1,216 @@
-# Deployment Overview
+# Deployment Architecture
 
-The Vegas Casino application can be deployed to Kubernetes using either:
+## Overview
 
-1. **Helm Charts** (Recommended) - Declarative, configurable deployment
-2. **Kubernetes Manifests** - Direct YAML files
+The Vegas Casino application is deployed in a **kind Kubernetes cluster** running inside your DevContainer/Codespace. All components are automatically set up when your Codespace launches.
 
-## Deployment Options
-
-- **[Helm Charts](helm.md)** - Recommended way to deploy using Helm (✅ **Current & Complete**)
-- **[Kubernetes Manifests](manifests.md)** - Direct Kubernetes manifest deployment (⚠️ **See k8s/ vs Helm comparison**)
-- **[k8s/ vs Helm Comparison](k8s-vs-helm.md)** - Differences between k8s/ directory and Helm chart
-- **[OpenFeature Operator](openfeature.md)** - Feature flag management setup
-- **[CI/CD and Releases](ci-cd.md)** - GitHub Actions workflows, creating releases, and updating environments
-
-## Prerequisites
-
-Before deploying, ensure you have:
-
-- ✅ **Kubernetes cluster** (v1.24+)
-- ✅ **kubectl** configured
-- ✅ **Helm 3.x** installed (for Helm deployment)
-- ✅ **OpenFeature Operator** installed (required!)
-- ✅ **Gateway API** installed (for ingress)
-- ✅ **Docker images** built and pushed to registry
-
-## Deployment Order
+## Architecture Diagram
 
 ```mermaid
-flowchart TD
-    Start([Start Deployment]) --> CheckPrereqs{Check Prerequisites}
-    CheckPrereqs -->|Missing| InstallPrereqs[Install Prerequisites]
-    InstallPrereqs --> InstallOF[1. Install OpenFeature Operator]
-    CheckPrereqs -->|Ready| InstallOF
+graph TB
+    subgraph "DevContainer / Codespace"
+        VSCODE[VS Code IDE]
+    end
     
-    InstallOF --> WaitOF[Wait for Operator Ready]
-    WaitOF --> InstallGateway[2. Install Gateway API]
-    InstallGateway --> DeployApp{Choose Deployment Method}
+    subgraph "Kind Kubernetes Cluster"
+        subgraph "Operators"
+            OF[OpenFeature Operator]
+            CM[Cert-Manager]
+            DT[Dynatrace Operator]
+        end
+        
+        subgraph "Gateway"
+            KG[Kubernetes Gateway]
+            HTTP[HTTPRoute]
+        end
+        
+        subgraph "Application Services"
+            FE[Frontend]
+            SLOTS[Slots]
+            ROUL[Roulette]
+            DICE[Dice]
+            BJ[Blackjack]
+            SCORE[Scoring]
+            DASH[Dashboard]
+        end
+        
+        subgraph "Data Stores"
+            REDIS[Redis]
+            PG[PostgreSQL]
+        end
+        
+        subgraph "Observability"
+            OTEL1[OTEL Collector<br/>DaemonSet]
+            OTEL2[OTEL Collector<br/>StatefulSet]
+        end
+    end
     
-    DeployApp -->|Helm| HelmDeploy[3a. Deploy via Helm]
-    DeployApp -->|Manifests| ManifestDeploy[3b. Deploy via Manifests]
+    subgraph "External"
+        DYNATRACE[Dynatrace Tenant]
+    end
     
-    HelmDeploy --> Verify[4. Verify Deployment]
-    ManifestDeploy --> Verify
+    VSCODE --> KG
+    KG --> HTTP
+    HTTP --> FE
+    FE --> SLOTS
+    FE --> ROUL
+    FE --> DICE
+    FE --> BJ
+    FE --> DASH
+    SLOTS --> SCORE
+    ROUL --> SCORE
+    DICE --> SCORE
+    BJ --> SCORE
+    SCORE --> PG
+    FE --> REDIS
+    SLOTS --> REDIS
+    ROUL --> REDIS
+    DICE --> REDIS
+    BJ --> REDIS
     
-    Verify --> CheckPods[Check Pods]
-    CheckPods --> CheckServices[Check Services]
-    CheckServices --> CheckGateway[Check Gateway]
-    CheckGateway --> CheckFlags[Check Feature Flags]
-    CheckFlags --> Complete([Deployment Complete])
+    FE --> OTEL2
+    SLOTS --> OTEL2
+    ROUL --> OTEL2
+    DICE --> OTEL2
+    BJ --> OTEL2
+    SCORE --> OTEL2
+    DASH --> OTEL2
     
-    style InstallOF fill:#dc2626,stroke:#b91c1c,color:#fff
-    style WaitOF fill:#f59e0b,stroke:#d97706,color:#fff
-    style Complete fill:#10b981,stroke:#059669,color:#fff
+    OTEL1 --> DT
+    OTEL2 --> DT
+    DT --> DYNATRACE
+    
+    OF -.->|Injects| FE
+    OF -.->|Injects| SLOTS
+    OF -.->|Injects| ROUL
+    OF -.->|Injects| DICE
+    OF -.->|Injects| BJ
+    
+    CM -.->|Certificates| KG
+    
+    style OF fill:#dc2626
+    style DT fill:#06b6d4
+    style KG fill:#9333ea
+    style DYNATRACE fill:#10b981
 ```
 
-### 1. Install OpenFeature Operator (REQUIRED FIRST!)
+## Deployment Components
 
-**⚠️ IMPORTANT**: The OpenFeature Operator must be installed **before** deploying the application.
+### 1. Infrastructure Layer
 
-```bash
-# Install OpenFeature Operator
-helm repo add openfeature https://open-feature.github.io/open-feature-operator
-helm repo update
-helm install open-feature-operator openfeature/open-feature-operator \
-  --namespace open-feature-system \
-  --create-namespace
-```
+- **Kind Cluster**: Local Kubernetes cluster (single node)
+- **OpenFeature Operator**: Manages feature flags and flagd sidecars
+- **Cert-Manager**: Issues TLS certificates for Gateway
+- **Kubernetes Gateway**: Modern ingress API for external access
+- **Dynatrace Operator**: Manages OneAgent and ActiveGate
 
-Wait for operator to be ready:
-```bash
-kubectl wait --for=condition=ready pod \
-  -l control-plane=controller-manager \
-  -n open-feature-system \
-  --timeout=90s
-```
+### 2. Application Layer
 
-### 2. Install Gateway API (if not already installed)
+All services deployed in `vegas-casino` namespace:
 
-```bash
-# Install Gateway API CRDs
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
-```
+- **Frontend**: Web UI (Node.js/Express) - Port 3000
+- **Game Services**: Slots, Roulette, Dice, Blackjack
+- **Scoring**: Leaderboards (Java/Spring Boot) - Port 8085
+- **Dashboard**: Analytics (Node.js) - Port 3001
 
-### 3. Deploy Application
+### 3. Data Layer
 
-Choose your deployment method:
-- [Helm Charts](helm.md) (Recommended)
-- [Kubernetes Manifests](manifests.md)
+- **Redis**: User sessions, game state, balances
+- **PostgreSQL**: Game results, leaderboards, statistics
 
-## Post-Deployment
+### 4. Observability Layer
 
-After deployment, verify:
+- **OTEL Collector (DaemonSet)**: Node-level metrics
+- **OTEL Collector (StatefulSet)**: Application telemetry
+- **Dynatrace Operator**: Exports to Dynatrace tenant
 
-1. **Pods are running**:
-   ```bash
-   kubectl get pods -n vegas-casino
-   ```
+## Automatic Setup
 
-2. **Services are available**:
-   ```bash
-   kubectl get svc -n vegas-casino
-   ```
+When your Codespace launches, the following happens automatically:
 
-3. **Gateway is accessible**:
-   ```bash
-   kubectl get gateway -n vegas-casino
-   kubectl get httproute -n vegas-casino
-   ```
+1. **Kind cluster created** (`.devcontainer/post_create.sh`)
+2. **Operators installed** (`codespace/configuration/init.sh`):
+   - OpenFeature Operator
+   - Cert-Manager
+   - Gateway API
+   - Dynatrace Operator
+3. **Application deployed** (`codespace/deployment.sh`):
+   - Helm chart deployment
+   - Feature flags configured
+   - Gateway and routing set up
 
-4. **OpenFeature resources**:
-   ```bash
-   kubectl get featureflag -n vegas-casino
-   kubectl get featureflagsource -n vegas-casino
-   ```
+## Deployment Method
+
+The application is deployed using **Helm charts**:
+
+- **Chart Location**: `helm/vegas-casino/`
+- **Values File**: `helm/vegas-casino/values.yaml`
+- **Namespace**: `vegas-casino`
 
 ## Accessing the Application
 
-### Via Gateway External IP
+### Port Forwarding (Recommended)
 
 ```bash
-# Get external IP
-kubectl get gateway vegas-casino-gateway -n vegas-casino -o jsonpath='{.status.addresses[0].value}'
-
-# Access frontend
-curl http://<EXTERNAL_IP>/
-
-# Access dashboard
-curl http://<EXTERNAL_IP>/dashboard
-```
-
-### Via Port Forward (Development)
-
-```bash
-# Forward frontend port
+# Forward frontend service
 kubectl port-forward -n vegas-casino svc/vegas-casino-frontend 3000:3000
 
 # Access at http://localhost:3000
 ```
+
+### Via Gateway
+
+```bash
+# Get gateway address (if available)
+kubectl get gateway vegas-casino-gateway -n vegas-casino \
+  -o jsonpath='{.status.addresses[0].value}'
+```
+
+## Verifying Deployment
+
+### Check All Components
+
+```bash
+# Check operators
+kubectl get pods -n open-feature-system
+kubectl get pods -n cert-manager
+kubectl get pods -n dynatrace
+
+# Check application
+kubectl get pods -n vegas-casino
+
+# Check services
+kubectl get svc -n vegas-casino
+
+# Check gateway
+kubectl get gateway -n vegas-casino
+kubectl get httproute -n vegas-casino
+
+# Check feature flags
+kubectl get featureflag -n vegas-casino
+kubectl get featureflagsource -n vegas-casino
+
+# Check OTEL collectors
+kubectl get pods -l app=otel-collector
+```
+
+## Updating the Deployment
+
+After making code changes:
+
+1. **Push changes** to your forked repository
+2. **GitHub Actions builds** new Docker images
+3. **Update Helm deployment** with new images
+
+See [Updating with Helm](../development/helm-updates.md) for details.
+
+## Component Details
+
+For detailed information about each component:
+
+- **[DevContainer Environment](devcontainer.md)**: Complete environment overview
+- **[OpenFeature Operator](openfeature.md)**: Feature flag management
+- **[Helm Charts](helm.md)**: Deployment configuration
 
 ## Troubleshooting
 
@@ -148,30 +222,38 @@ kubectl describe pod <pod-name> -n vegas-casino
 
 # Check logs
 kubectl logs <pod-name> -n vegas-casino
+
+# Check events
+kubectl get events -n vegas-casino --sort-by='.lastTimestamp'
 ```
 
-### OpenFeature Issues
+### Services Not Accessible
 
 ```bash
-# Verify operator is running
-kubectl get pods -n open-feature-system
+# Check service endpoints
+kubectl get endpoints -n vegas-casino
 
-# Check FeatureFlagSource
-kubectl describe featureflagsource -n vegas-casino
-
-# Check flagd sidecars
-kubectl get pods -n vegas-casino -o jsonpath='{.items[*].spec.containers[*].name}'
-```
-
-### Service Connectivity
-
-```bash
 # Test service connectivity
 kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- \
   curl http://vegas-casino-frontend:3000/health
 ```
 
----
+### Telemetry Not Flowing
 
-**Next**: Learn about [Helm Deployment](helm.md) or [Kubernetes Manifests](manifests.md).
+```bash
+# Check OTEL collectors
+kubectl get pods -l app=otel-collector
 
+# Check collector logs
+kubectl logs -l app=otel-collector
+
+# Check Dynatrace operator
+kubectl get dynakube -n dynatrace
+kubectl describe dynakube -n dynatrace
+```
+
+## Next Steps
+
+- [DevContainer Environment](devcontainer.md): Learn about the complete environment setup
+- [Development Guide](../development/source-code.md): Understand how to make changes
+- [Feature Flags Guide](../development/feature-flags.md): Learn about feature flags
