@@ -18,6 +18,21 @@ In this challenge you will learn how use CoPilot to improve your Dynatrace setup
 
 - **Extend your Agent**: Whatever use case(s) you implement: can you put all of this into a dynatrace best practice agent?
 
+!!! important "Configuration API Token Required"
+    This challenge requires a **Configuration API token** to interact with Dynatrace's Configuration API for creating synthetic tests, dashboards, and workflows.
+    
+    **Token Variable:** `DYNATRACE_CONFIG_API_TOKEN`
+    
+    This token should be added as a **secret** in your Codespace settings. You can find the token value in the **launcher** (Dynatrace Launch Pad) under Step 5: Configure Codespace Secrets.
+    
+    The token has the following scopes:
+    
+    - ✅ Read settings
+    - ✅ Write settings
+    - ✅ Read synthetic monitor execution results
+    - ✅ Read synthetic locations
+    - ✅ Create and read synthetic monitors, locations, and nodes
+    - ✅ Read synthetic monitors, locations, and nodes
 
 ## Success Criteria
 You will have successfully completed this challenge when you:
