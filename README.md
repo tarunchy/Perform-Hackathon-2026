@@ -47,17 +47,17 @@ The Vegas Casino is a **microservices-based application** designed for observabi
 ┌─────────────────────────────────────────────────────────────┐
 │                    Frontend Service                         │
 │                  (Node.js/Express)                          │
-│                  Port: 3000 (HTTP)                         │
+│                  Port: 3000 (HTTP)                          │
 └──────────────┬──────────────────────────────────────────────┘
                │
                ├──────────────────────────────────────┐
                │                                      │
                ▼                                      ▼
-    ┌──────────────────┐                  ┌──────────────────┐
+    ┌──────────────────┐                  ┌───────────────────┐
     │  Game Services   │                  │  Dashboard Service│
-    │                  │                  │  (Node.js)       │
-    │  • Slots (Node)  │                  │  Port: 3001      │
-    │  • Roulette (Py)│                  └────────┬──────────┘
+    │                  │                  │  (Node.js)        │
+    │  • Slots (Node)  │                  │  Port: 3001       │
+    │  • Roulette (Py) │                  └────────┬──────────┘
     │  • Dice (Go)     │                           │
     │  • Blackjack (N) │                           │
     │                  │                           │
@@ -71,13 +71,13 @@ The Vegas Casino is a **microservices-based application** designed for observabi
     │   Redis Cache    │                  │ Scoring Service  │
     │   (State Store)  │                  │  (Java/Spring)   │
     │   Port: 6379     │                  │  Port: 8085      │
-    └──────────────────┘                  └────────┬──────────┘
+    └──────────────────┘                  └────────┬─────────┘
                                                    │
                                                    ▼
                                           ┌──────────────────┐
-                                          │   PostgreSQL      │
-                                          │   (Database)      │
-                                          │   Port: 5432      │
+                                          │   PostgreSQL     │
+                                          │   (Database)     │
+                                          │   Port: 5432     │
                                           └──────────────────┘
 ```
 
