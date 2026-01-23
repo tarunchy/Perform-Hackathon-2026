@@ -50,9 +50,9 @@ The Vegas Casino is a **microservices-based application** designed for observabi
 │                  Port: 3000 (HTTP)                          │
 └──────────────┬──────────────────────────────────────────────┘
                │
-               ├──────────────────────────────────────┐
-               │                                      │
-               ▼                                      ▼
+               ├────────────────────────────────────┐
+               │                                    │
+               ▼                                    ▼
     ┌──────────────────┐                  ┌───────────────────┐
     │  Game Services   │                  │  Dashboard Service│
     │                  │                  │  (Node.js)        │
