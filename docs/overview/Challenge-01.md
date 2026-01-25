@@ -4,7 +4,25 @@
 
 ## Pre-requisites
 
-Ensure that GitHub Copilot is installed in your IDE as part of Challenge 0. This challenge assumes that you have Copilot ready and functioning in your IDE.
+Before starting the hack, make sure the following is set up.
+
+### GitHub Account & Copilot Access
+- **Sign in or create a GitHub account**
+- **GitHub Copilot access is required** - A Microsoft coach will provide a license for the hackathon
+
+
+### Option 1: GitHub Codespaces (Recommended)
+- Launch the GitHub Codespaces environment using the link [here](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=1001156492&skip_quickstart=true&machine=basicLinux32gb&devcontainer_path=.devcontainer%2F071-GitHubCopilot%2Fdevcontainer.json&geo=UsWest)
+- The Codespace includes preinstalled runtimes:
+  - Python
+  - Node.js
+  - Java
+  - .NET
+- Use this option if your language is supported above
+
+### Option 2: Local IDE (If you prefer another language or custom tooling)
+- Use your preferred IDE (for example, Visual Studio Code)
+- Install the GitHub Copilot extension.  Instructions can be found [here](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-extension)
 
 ## Introduction
 
@@ -54,3 +72,4 @@ You have successfully completed this challenge when you can:
 ## Advanced Challenges (Optional)
 
 **Looking for an Extra Challenge?**: Consider switching gears for a broader experience. If your initial approach involved using a language you know well, try completing this challenge in one that is less familiar. Conversely, if you started with a language that was new to you, circle back and see the difference in speed when using GitHub Copilot with a language you're proficient in.
+
