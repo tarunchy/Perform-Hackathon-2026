@@ -1,19 +1,32 @@
 """
 Common Structured Logging Utility for Python Services
-Provides consistent JSON logging across all services
+Provides consistent JSON logging across all services with trace correlation
 """
 
 import json
 import sys
 from datetime import datetime
+from opentelemetry import trace
 
 
 class Logger:
     def __init__(self, service_name):
         self.service_name = service_name
 
+    def get_trace_context(self):
+        """Get current trace context for log correlation"""
+        span = trace.get_current_span()
+        if span and span.get_span_context().is_valid:
+            span_context = span.get_span_context()
+            return {
+                "trace.id": format(span_context.trace_id, '032x'),
+                "span.id": format(span_context.span_id, '016x'),
+                "trace.flags": span_context.trace_flags
+            }
+        return {}
+
     def format_log(self, level, category, event, data=None):
-        """Format log entry with timestamp and service name"""
+        """Format log entry with timestamp, service name, and trace correlation"""
         if data is None:
             data = {}
         
@@ -23,6 +36,7 @@ class Logger:
             "level": level.upper(),
             "category": category,
             "event": event,
+            **self.get_trace_context(),  # Add trace correlation
             **data
         }
         return json.dumps(log_entry)

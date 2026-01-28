@@ -3,7 +3,7 @@
  */
 
 const { createClient } = require('redis');
-const { trace, context } = require('@opentelemetry/api');
+const { trace, context, SpanStatusCode } = require('@opentelemetry/api');
 
 // Redis connection configuration
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
@@ -78,12 +78,12 @@ async function get(key, defaultValue = null) {
 
     const value = await redisClient.get(key);
     span.setAttribute('db.redis.value_found', value !== null);
-    span.setStatus({ code: 1 }); // OK
+    span.setStatus({ code: SpanStatusCode.OK });
     span.end();
     return value !== null ? value : defaultValue;
   } catch (error) {
     span.recordException(error);
-    span.setStatus({ code: 2, message: error.message });
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
     span.end();
     console.error('Redis get error:', error);
     return defaultValue;
@@ -107,7 +107,7 @@ async function set(key, value, expirationSeconds = null) {
   try {
     if (!redisClient || !redisClient.isReady) {
       span.setAttribute('db.redis.connection', false);
-      span.setStatus({ code: 2, message: 'Redis client not ready' });
+      span.setStatus({ code: SpanStatusCode.ERROR, message: 'Redis client not ready' });
       span.end();
       return false;
     }
@@ -118,12 +118,12 @@ async function set(key, value, expirationSeconds = null) {
     } else {
       await redisClient.set(key, value);
     }
-    span.setStatus({ code: 1 }); // OK
+    span.setStatus({ code: SpanStatusCode.OK });
     span.end();
     return true;
   } catch (error) {
     span.recordException(error);
-    span.setStatus({ code: 2, message: error.message });
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
     span.end();
     console.error('Redis set error:', error);
     return false;
@@ -146,18 +146,18 @@ async function del(key) {
   try {
     if (!redisClient || !redisClient.isReady) {
       span.setAttribute('db.redis.connection', false);
-      span.setStatus({ code: 2, message: 'Redis client not ready' });
+      span.setStatus({ code: SpanStatusCode.ERROR, message: 'Redis client not ready' });
       span.end();
       return false;
     }
 
     await redisClient.del(key);
-    span.setStatus({ code: 1 }); // OK
+    span.setStatus({ code: SpanStatusCode.OK });
     span.end();
     return true;
   } catch (error) {
     span.recordException(error);
-    span.setStatus({ code: 2, message: error.message });
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
     span.end();
     console.error('Redis delete error:', error);
     return false;

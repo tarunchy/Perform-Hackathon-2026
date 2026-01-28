@@ -43,7 +43,11 @@ kubectl apply -f $WORKDIR/codespace/manifests/otel-collector-daemonset.yaml
 kubectl apply -f $WORKDIR/codespace/manifests/otel-collector-statefulset.yaml
 kubectl apply -f $WORKDIR/codespace/manifests/otel-collector-service.yaml
 
-
+# Install cert-manager (required by OpenFeature Operator)
+echo "Installing cert-manager..."
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.3/cert-manager.yaml
+echo "Waiting for cert-manager to be ready..."
+kubectl wait --for=condition=Available=True deploy --all -n cert-manager --timeout=180s
 
 helm repo add openfeature https://open-feature.github.io/open-feature-operator
 helm repo update
@@ -60,8 +64,15 @@ kubectl label namespace vegas-casino oneagent=false
 
 helm install vegas-casino $WORKDIR/helm/vegas-casino \
    --set global.codespace=true \
+   --set gatewayAPI.enabled=false \
+   --set gateway.enabled=true \
+   --set gateway.service.type=NodePort \
    --namespace vegas-casino
 
-HTTP_IDX=$(kubectl get svc vegas-casino-gateway  -n vegas-casino -o json |  jq -r '.spec.ports | to_entries | .[] | select(.value.name == "listener-80") | .key')
-PATCH_OPS="[{\"op\": \"replace\", \"path\": \"/spec/ports/${HTTP_IDX}/nodePort\", \"value\": 30080}]"
-kubectl patch svc vegas-casino-gateway  -n vegas-casino  --type='json'  -p="${PATCH_OPS}"
+HTTP_IDX=$(kubectl get svc vegas-casino-gateway  -n vegas-casino -o json |  jq -r '.spec.ports | to_entries | .[] | select(.value.name == "http") | .key')
+if [ -n "$HTTP_IDX" ]; then
+  PATCH_OPS="[{\"op\": \"replace\", \"path\": \"/spec/ports/${HTTP_IDX}/nodePort\", \"value\": 30080}]"
+  kubectl patch svc vegas-casino-gateway  -n vegas-casino  --type='json'  -p="${PATCH_OPS}"
+else
+  echo "Warning: Could not find 'http' port in gateway service"
+fi

@@ -1,4 +1,4 @@
-{{- if .Values.global.codespace }}
+{{- if and .Values.global.codespace .Values.gatewayAPI.enabled }}
 apiVersion: gateway.kgateway.dev/v1alpha1
 kind: GatewayParameters
 metadata:

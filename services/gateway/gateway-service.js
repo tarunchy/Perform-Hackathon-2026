@@ -1849,11 +1849,19 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📊 Metrics available at http://0.0.0.0:${PORT}/metrics`);
   console.log(`🌐 External access available at http://3.85.230.103:${PORT}`);
   console.log(`🔌 WebSocket server ready for real-time updates`);
-  // Pre-start game services to improve first-request experience
-  startChildService(SERVICE_NAMES.slots, path.join(__dirname, '..', 'slots', 'index.js'));
-  startChildService(SERVICE_NAMES.roulette, path.join(__dirname, '..', 'roulette', 'index.js'));
-  startChildService(SERVICE_NAMES.dice, path.join(__dirname, '..', 'dice', 'go', 'dice-service-grpc'));
-  startChildService(SERVICE_NAMES.blackjack, path.join(__dirname, '..', 'blackjack', 'index.js'));
+  
+  // Only start child services if NOT running in Kubernetes (each service runs in its own pod)
+  const isK8s = process.env.KUBERNETES_SERVICE_HOST || process.env.SLOTS_SERVICE_URL;
+  if (!isK8s) {
+    console.log(`📦 Starting child services (monolithic mode)`);
+    // Pre-start game services to improve first-request experience
+    startChildService(SERVICE_NAMES.slots, path.join(__dirname, '..', 'slots', 'index.js'));
+    startChildService(SERVICE_NAMES.roulette, path.join(__dirname, '..', 'roulette', 'index.js'));
+    startChildService(SERVICE_NAMES.dice, path.join(__dirname, '..', 'dice', 'go', 'dice-service-grpc'));
+    startChildService(SERVICE_NAMES.blackjack, path.join(__dirname, '..', 'blackjack', 'index.js'));
+  } else {
+    console.log(`☸️  Running in Kubernetes mode - services are separate pods`);
+  }
 });
 
 /**

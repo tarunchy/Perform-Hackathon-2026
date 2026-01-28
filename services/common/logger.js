@@ -1,7 +1,9 @@
 /**
  * Common Structured Logging Utility
- * Provides consistent JSON logging across all services
+ * Provides consistent JSON logging across all services with trace correlation
  */
+
+const { trace, context } = require('@opentelemetry/api');
 
 class Logger {
   constructor(serviceName) {
@@ -9,7 +11,23 @@ class Logger {
   }
 
   /**
-   * Format log entry with timestamp and service name
+   * Get current trace context for log correlation
+   */
+  getTraceContext() {
+    const span = trace.getActiveSpan();
+    if (span) {
+      const spanContext = span.spanContext();
+      return {
+        'trace.id': spanContext.traceId,
+        'span.id': spanContext.spanId,
+        'trace.flags': spanContext.traceFlags
+      };
+    }
+    return {};
+  }
+
+  /**
+   * Format log entry with timestamp, service name, and trace correlation
    */
   formatLog(level, category, event, data = {}) {
     return JSON.stringify({
@@ -18,6 +36,7 @@ class Logger {
       level: level.toUpperCase(),
       category: category,
       event: event,
+      ...this.getTraceContext(),  // Add trace correlation
       ...data
     });
   }

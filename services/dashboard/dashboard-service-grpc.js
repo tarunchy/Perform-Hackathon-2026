@@ -6,7 +6,7 @@
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
-const { trace, context, propagation } = require('@opentelemetry/api');
+const { trace, context, propagation, SpanStatusCode } = require('@opentelemetry/api');
 const { initializeTelemetry } = require('./common/opentelemetry');
 const Logger = require('./common/logger');
 
@@ -302,7 +302,7 @@ class DashboardServiceImpl {
         'dashboard.total_bet_amount': totalBetAmount,
         'dashboard.top_win_amount': topWinData ? Math.abs(topWinData.payout) : 0,
       });
-      span.setStatus({ code: 1 });
+      span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       
       console.log(`[Dashboard] ✅ Returning stats for ${game}: total_games=${totalGames}, total_wins=${totalWins}, top_win=${topWinData ? JSON.stringify(topWinData) : 'null'}`);
@@ -332,7 +332,7 @@ class DashboardServiceImpl {
       });
     } catch (error) {
       span.recordException(error);
-      span.setStatus({ code: 2, message: error.message });
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
       span.end();
       callback({ code: grpc.status.INTERNAL, message: error.message });
     }
@@ -434,7 +434,7 @@ class DashboardServiceImpl {
         'dashboard.games_count': statsWithTopWins.length,
         'dashboard.total_wins': statsWithTopWins.reduce((sum, s) => sum + (s.total_wins || 0), 0),
       });
-      span.setStatus({ code: 1 });
+      span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       
       callback(null, {
@@ -442,7 +442,7 @@ class DashboardServiceImpl {
       });
     } catch (error) {
       span.recordException(error);
-      span.setStatus({ code: 2, message: error.message });
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
       span.end();
       callback({ code: grpc.status.INTERNAL, message: error.message });
     }
@@ -472,7 +472,7 @@ class DashboardServiceImpl {
       span.setAttributes({
         'dashboard.record_count': Array.isArray(leaderboard) ? leaderboard.length : 0,
       });
-      span.setStatus({ code: 1 });
+      span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       
       callback(null, {
@@ -487,7 +487,7 @@ class DashboardServiceImpl {
       });
     } catch (error) {
       span.recordException(error);
-      span.setStatus({ code: 2, message: error.message });
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
       span.end();
       callback({ code: grpc.status.INTERNAL, message: error.message });
     }
@@ -518,7 +518,7 @@ class DashboardServiceImpl {
       span.setAttributes({
         'dashboard.record_count': Array.isArray(results) ? results.length : 0,
       });
-      span.setStatus({ code: 1 });
+      span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       
       callback(null, {
@@ -538,7 +538,7 @@ class DashboardServiceImpl {
       });
     } catch (error) {
       span.recordException(error);
-      span.setStatus({ code: 2, message: error.message });
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
       span.end();
       callback({ code: grpc.status.INTERNAL, message: error.message });
     }

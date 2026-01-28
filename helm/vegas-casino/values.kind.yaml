@@ -1,0 +1,26 @@
+# KIND-specific values override
+# Use this for local KIND deployments in Codespaces
+
+global:
+  imageRegistry: vegasapp
+  imageTag: latest
+  imagePullPolicy: Never
+  codespace: true
+  teamIdentifier: vegas-casino-kind
+
+# Disable Gateway API, use traditional gateway service
+gatewayAPI:
+  enabled: false
+
+# Enable gateway service with NodePort
+gateway:
+  enabled: true
+  service:
+    type: NodePort
+
+# Disable optional test components for minimal deployment
+k6:
+  enabled: false
+
+playwright:
+  enabled: false
