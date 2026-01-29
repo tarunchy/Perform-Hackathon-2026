@@ -24,25 +24,28 @@ createService(process.env.SERVICE_NAME || 'vegas-slots-service', (app) => {
     const tracer = trace.getTracer('vegas-slots-service');
     const span = tracer.startSpan('slots_spin');
     
-    // Add game attributes to span
+    const p = req.body || {};
+    const betAmount = p.BetAmount || 10;
+    const Username = p.Username || 'Anonymous';
+    
+    // Enhanced: Add user and bet context
     span.setAttributes({
+      'user.name': Username,
       'game.action': 'spin',
-      'game.bet_amount': req.body.BetAmount || 10,
-      'game.cheat_active': req.body.CheatActive || false,
+      'game.type': 'slots-machine',
+      'game.bet_amount': betAmount,
+      'game.cheat_active': p.CheatActive || false,
     });
     
-    if (req.body.CheatType) {
-      span.setAttribute('game.cheat_type', req.body.CheatType);
+    if (p.CheatType) {
+      span.setAttribute('game.cheat_type', p.CheatType);
     }
     
     console.log('🎰 SPIN REQUEST RECEIVED:', {
       timestamp: new Date().toISOString(),
-      body: req.body,
+      body: p,
       headers: req.headers['content-type']
     });
-    
-    const p = req.body || {};
-    const betAmount = p.BetAmount || 10;
     const icons = ['dynatrace','smartscape','application','database','server','cloud','shield'];
     
     // Simplified Payout Matrix - EXACTLY Matches Frontend (6 Symbols + Dynatrace Special)
@@ -149,6 +152,7 @@ createService(process.env.SERVICE_NAME || 'vegas-slots-service', (app) => {
     }
     
     const win = winAmount > 0;
+    const netResult = winAmount - betAmount;
     
     // Add cheat metadata to response
     const response = { 
@@ -165,13 +169,34 @@ createService(process.env.SERVICE_NAME || 'vegas-slots-service', (app) => {
       cheatBoosted: cheatActive && win
     };
     
-    // Add result attributes to span
+    // Enhanced: Add comprehensive result attributes to span
     span.setAttributes({
       'game.win': win,
       'game.win_amount': winAmount,
       'game.multiplier': multiplier,
       'game.win_type': winType,
+      'game.result_symbol_1': result[0],
+      'game.result_symbol_2': result[1],
+      'game.result_symbol_3': result[2],
+      'game.net_result': netResult,
+      'game.cheat_boosted': cheatActive && win,
     });
+    
+    // Enhanced: Add events for significant wins
+    if (win) {
+      span.addEvent('slot_win', {
+        'event.win_type': winType,
+        'event.multiplier': multiplier,
+        'event.description': description,
+      });
+      
+      if (winType === 'special') {
+        span.addEvent('jackpot_hit', {
+          'event.jackpot_type': 'special_combo',
+          'event.payout': winAmount,
+        });
+      }
+    }
     
     console.log('🎰 SPIN RESPONSE SENT:', {
       win: win,

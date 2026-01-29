@@ -18,6 +18,7 @@ COPY services/common/openfeature.js ./common/openfeature.js
 COPY services/common/redis.js ./common/redis.js
 COPY services/common/scoring.js ./common/scoring.js
 COPY services/common/logger.js ./common/logger.js
+COPY services/common/metrics.js ./common/metrics.js
 RUN chmod 644 ./common/*.js
 # Copy proto files
 RUN mkdir -p proto && chmod 755 proto

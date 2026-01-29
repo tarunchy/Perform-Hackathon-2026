@@ -44,27 +44,48 @@ createService(process.env.SERVICE_NAME || 'vegas-blackjack-service', (app) => {
     const tracer = trace.getTracer('vegas-blackjack-service');
     const span = tracer.startSpan('blackjack_deal');
     
-    span.setAttributes({
-      'game.action': 'deal',
-      'game.bet_amount': req.body.BetAmount || 10,
-    });
     const p = req.body || {};
     const betAmount = Number(p.BetAmount || 10);
     const Username = p.Username || 'Anonymous';
+    
+    // Enhanced: Add user and bet context
+    span.setAttributes({
+      'user.name': Username,
+      'game.action': 'deal',
+      'game.type': 'blackjack-21',
+      'game.bet_amount': betAmount,
+    });
+    
     const playerHand = [drawCard(), drawCard()];
     const dealerHand = [drawCard(), drawCard()];
     games.set(Username, { playerHand, dealerHand, betAmount });
+    
+    const playerScore = scoreHand(playerHand);
+    const dealerVisibleScore = scoreHand([dealerHand[0]]);
+    const isBlackjack = playerScore === 21;
+    
+    // Enhanced: Add detailed game state
     span.setAttributes({
-      'game.player_score': scoreHand(playerHand),
-      'game.dealer_score': scoreHand(playerHand) >= 21 ? scoreHand(dealerHand) : scoreHand([dealerHand[0]]),
+      'game.player_score': playerScore,
+      'game.dealer_visible_score': dealerVisibleScore,
+      'game.player_card_count': playerHand.length,
+      'game.is_blackjack': isBlackjack,
     });
+    
+    // Enhanced: Add event for natural blackjack
+    if (isBlackjack) {
+      span.addEvent('natural_blackjack', {
+        'event.payout_multiplier': 2.5,
+      });
+    }
+    
     span.end();
     
     res.json({
       playerHand,
       dealerHand,
-      playerScore: scoreHand(playerHand),
-      dealerScore: scoreHand(playerHand) >= 21 ? scoreHand(dealerHand) : scoreHand([dealerHand[0]]),
+      playerScore: playerScore,
+      dealerScore: playerScore >= 21 ? scoreHand(dealerHand) : dealerVisibleScore,
       betAmount,
       timestamp: new Date().toISOString()
     });
@@ -76,23 +97,45 @@ createService(process.env.SERVICE_NAME || 'vegas-blackjack-service', (app) => {
     
     const p = req.body || {};
     const Username = p.Username || 'Anonymous';
+    
+    // Enhanced: Add user context
+    span.setAttributes({
+      'user.name': Username,
+      'game.action': 'hit',
+      'game.type': 'blackjack-21',
+    });
+    
     const g = games.get(Username);
     if (!g) {
       span.setAttribute('http.status_code', 400);
+      span.setAttribute('error.type', 'no_active_hand');
       span.end();
       return res.status(400).json({ error: 'No active hand' });
     }
     
     const newCard = drawCard();
-    g.playerHand.push(newCard);
+    g.playerHand.push(newCard());
     const playerScore = scoreHand(g.playerHand);
     const dealerScore = scoreHand([g.dealerHand[0]]);
+    const isBust = playerScore > 21;
     
+    // Enhanced: Add detailed game state
     span.setAttributes({
-      'game.action': 'hit',
       'game.player_score': playerScore,
-      'game.dealer_score': dealerScore,
+      'game.dealer_visible_score': dealerScore,
+      'game.player_card_count': g.playerHand.length,
+      'game.is_bust': isBust,
+      'game.new_card_rank': newCard.rank,
     });
+    
+    // Enhanced: Add event for bust
+    if (isBust) {
+      span.addEvent('player_bust', {
+        'event.final_score': playerScore,
+        'event.card_count': g.playerHand.length,
+      });
+    }
+    
     span.end();
     
     res.json({ newCard, playerScore, dealerScore, timestamp: new Date().toISOString() });
@@ -104,34 +147,73 @@ createService(process.env.SERVICE_NAME || 'vegas-blackjack-service', (app) => {
     
     const p = req.body || {};
     const Username = p.Username || 'Anonymous';
+    
+    // Enhanced: Add user context
+    span.setAttributes({
+      'user.name': Username,
+      'game.action': 'stand',
+      'game.type': 'blackjack-21',
+    });
+    
     const g = games.get(Username);
     if (!g) {
       span.setAttribute('http.status_code', 400);
+      span.setAttribute('error.type', 'no_active_hand');
       span.end();
       return res.status(400).json({ error: 'No active hand' });
     }
     
+    const initialDealerScore = scoreHand(g.dealerHand);
+    let dealerHitCount = 0;
+    
     // Reveal dealer and draw to 17+
     while (scoreHand(g.dealerHand) < 17) {
       g.dealerHand.push(drawCard());
+      dealerHitCount++;
     }
+    
     const playerScore = scoreHand(g.playerHand);
     const dealerScore = scoreHand(g.dealerHand);
+    const dealerBust = dealerScore > 21;
+    
     let result = 'lose';
     if (playerScore > 21) result = 'lose';
     else if (dealerScore > 21 || playerScore > dealerScore) result = 'win';
     else if (playerScore === dealerScore) result = 'push';
+    
     let payout = 0;
     if (result === 'win') payout = g.betAmount * 2; // return stake + win
     else if (result === 'push') payout = g.betAmount; // return stake
     
+    const netResult = payout - g.betAmount;
+    
+    // Enhanced: Add comprehensive game outcome
     span.setAttributes({
-      'game.action': 'stand',
       'game.player_score': playerScore,
       'game.dealer_score': dealerScore,
+      'game.dealer_initial_score': initialDealerScore,
+      'game.dealer_hit_count': dealerHitCount,
+      'game.dealer_bust': dealerBust,
       'game.result': result,
       'game.payout': payout,
+      'game.bet_amount': g.betAmount,
+      'game.net_result': netResult,
+      'game.player_card_count': g.playerHand.length,
+      'game.dealer_card_count': g.dealerHand.length,
     });
+    
+    // Enhanced: Add events for key outcomes
+    if (result === 'win') {
+      span.addEvent('player_won', {
+        'event.win_amount': payout,
+        'event.win_type': dealerBust ? 'dealer_bust' : 'higher_score',
+      });
+    } else if (result === 'push') {
+      span.addEvent('push', {
+        'event.tied_score': playerScore,
+      });
+    }
+    
     span.end();
     
     const dealerFinalHand = g.dealerHand;

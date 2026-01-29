@@ -6,6 +6,8 @@ metadata:
 data:
   # OpenTelemetry standard environment variables
   OTEL_SERVICE_VERSION: "2.1.0"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.vegas-casino.svc.cluster.local:4317"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
   DEPLOYMENT_ENVIRONMENT: "production"
   SERVICE_NAMESPACE: "vegas-casino"
   K8S_CLUSTER_NAME: "vegas-casino-k8s-cluster"

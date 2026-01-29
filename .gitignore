@@ -64,3 +64,6 @@ SECURITY_CLEANUP_GUIDE.md
 cleanup-terraform-state.sh
 push-and-create-pr.sh
 remove-sensitive-files-from-history.sh
+# Dynatrace secrets
+*dynatrace-secrets*
+*.secrets.sh

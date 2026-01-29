@@ -15,6 +15,7 @@ RUN mkdir -p common && chmod 755 common
 COPY services/common/openfeature.js ./common/openfeature.js
 COPY services/common/opentelemetry.js ./common/opentelemetry.js
 COPY services/common/logger.js ./common/logger.js
+COPY services/common/metrics.js ./common/metrics.js
 RUN chmod 644 ./common/*.js
 COPY proto/ ./proto/
 

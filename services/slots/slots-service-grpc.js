@@ -12,9 +12,20 @@ const { initializeOpenFeature, getFeatureFlag } = require('./common/openfeature'
 const { initializeRedis, set, get, del } = require('./common/redis');
 const { recordGameResult, recordScore } = require('./common/scoring');
 const Logger = require('./common/logger');
+const { 
+  initializeMetrics, 
+  recordGamePlay, 
+  recordGameWin, 
+  recordGameLoss, 
+  recordBetAmount,
+  recordGameLatency 
+} = require('./common/metrics');
 
 // Initialize Redis
 initializeRedis();
+
+// Initialize Metrics
+initializeMetrics('vegas-slots-service');
 
 // Load proto file
 const PROTO_PATH = path.join(__dirname, './proto/slots.proto');
@@ -215,6 +226,8 @@ class SlotsServiceImpl {
   }
 
   async Spin(call, callback) {
+    const gameStartTime = Date.now();
+    
     // Extract trace context from gRPC call metadata
     const metadata = call.metadata || new grpc.Metadata();
     const carrier = extractMetadata(metadata);
@@ -344,6 +357,19 @@ class SlotsServiceImpl {
       bet_amount: betAmount,
       cheat_boosted: cheatBoosted
     });
+
+    // Record metrics
+    const gameEndTime = Date.now();
+    const gameLatency = gameEndTime - gameStartTime;
+    recordGamePlay('slots', Username, { 'bet.amount': betAmount });
+    recordBetAmount('slots', betAmount);
+    recordGameLatency('slots', gameLatency);
+    
+    if (win && winAmount > 0) {
+      recordGameWin('slots', Username, winAmount, { 'win.type': winType });
+    } else {
+      recordGameLoss('slots', Username);
+    }
 
     // Store game state in Redis
     const gameState = {

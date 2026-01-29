@@ -87,6 +87,15 @@ createService(process.env.SERVICE_NAME || 'vegas-roulette-service', (app) => {
     const span = tracer.startSpan('roulette_spin');
     
     const p = req.body || {};
+    const Username = p.Username || 'Anonymous';
+    
+    // Enhanced: Add user context to span
+    span.setAttributes({
+      'user.name': Username,
+      'game.action': 'spin',
+      'game.type': 'european-roulette',
+      'game.bet_type': p.BetType || 'red',
+    });
     
     // Get feature flags
     const multipleBetsEnabled = await getFeatureFlag('roulette.multiple-bets', true);
@@ -97,17 +106,37 @@ createService(process.env.SERVICE_NAME || 'vegas-roulette-service', (app) => {
     const cheatActive = cheatsEnabled && p.CheatActive === true;
     const cheatType = cheatActive ? (p.CheatType || 'ballControl') : null;
     
-      span.setAttributes({
-        'game.action': 'spin',
-        'game.cheat_active': cheatActive,
-        'feature_flag.multiple_bets': multipleBetsEnabled,
-        'feature_flag.live_wheel': liveWheelEnabled,
-        'feature_flag.cheat_detection': cheatsEnabled,
-      });
+    // Enhanced: Add feature flag details
+    span.setAttributes({
+      'game.cheat_active': cheatActive,
+      'feature_flag.multiple_bets': multipleBetsEnabled,
+      'feature_flag.live_wheel': liveWheelEnabled,
+      'feature_flag.cheat_detection': cheatsEnabled,
+    });
     
     if (cheatType) {
       span.setAttribute('game.cheat_type', cheatType);
     }
+    
+    // Enhanced: Calculate total bet amount early for tracking
+    let totalBetAmount = 0;
+    let betCount = 0;
+    if (p.BetType === 'multiple' && p.BetValue && typeof p.BetValue === 'object') {
+      for (const [, bet] of Object.entries(p.BetValue)) {
+        if (bet && typeof bet === 'object') {
+          totalBetAmount += Number(bet.amount || 0);
+          betCount++;
+        }
+      }
+    } else {
+      totalBetAmount = Number(p.BetAmount || 10);
+      betCount = 1;
+    }
+    
+    span.setAttributes({
+      'game.total_bet_amount': totalBetAmount,
+      'game.bet_count': betCount,
+    });
     
     // Validate multiple bets feature flag
     if (p.BetType === 'multiple' && !multipleBetsEnabled) {
@@ -223,6 +252,10 @@ createService(process.env.SERVICE_NAME || 'vegas-roulette-service', (app) => {
       totalBetAmount = Number(p.BetAmount || 10);
     }
 
+    // Enhanced: Calculate house edge and RTP for this spin
+    const houseEdge = totalBetAmount > 0 ? ((totalBetAmount - payout) / totalBetAmount * 100) : 0;
+    const actualRTP = totalBetAmount > 0 ? (payout / totalBetAmount * 100) : 0;
+    
     const Username = p.Username || 'Anonymous';
 
     // Store game state in Redis
@@ -257,14 +290,26 @@ createService(process.env.SERVICE_NAME || 'vegas-roulette-service', (app) => {
       },
     }).catch(err => console.warn('Failed to record game result:', err));
 
-    // Add game attributes to span
+    // Enhanced: Add comprehensive game attributes to span
     span.setAttributes({
       'game.winning_number': winningNumber,
       'game.color': color,
       'game.win': anyWin,
       'game.payout': payout,
       'game.cheat_boosted': cheatBoosted,
+      'game.house_edge_percent': Math.round(houseEdge * 100) / 100,
+      'game.actual_rtp_percent': Math.round(actualRTP * 100) / 100,
+      'game.net_result': payout - totalBetAmount,
     });
+    
+    // Enhanced: Set span status based on game outcome
+    if (anyWin) {
+      span.addEvent('player_won', {
+        'event.win_amount': payout,
+        'event.multiplier': payout / totalBetAmount,
+      });
+    }
+    
     span.end();
     
     res.json({ 

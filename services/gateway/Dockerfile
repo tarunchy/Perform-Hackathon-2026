@@ -15,6 +15,7 @@ COPY services/gateway/gateway-service.js ./
 RUN mkdir -p services/common && chmod -R 755 services
 COPY services/common/service-manager.js services/common/service-manager.js
 COPY services/common/opentelemetry.js services/common/opentelemetry.js
+COPY services/common/metrics.js services/common/metrics.js
 RUN chmod 644 services/common/*.js
 
 # Copy proto files (if needed for service discovery)

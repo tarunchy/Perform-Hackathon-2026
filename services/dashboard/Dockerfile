@@ -15,6 +15,7 @@ COPY services/dashboard/ ./
 RUN mkdir -p common && chmod 755 common
 COPY services/common/opentelemetry.js ./common/opentelemetry.js
 COPY services/common/logger.js ./common/logger.js
+COPY services/common/metrics.js ./common/metrics.js
 RUN chmod 644 ./common/*.js
 
 # Copy proto files

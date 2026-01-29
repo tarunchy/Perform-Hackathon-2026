@@ -8,7 +8,7 @@
 				"@dynatrace-oss/dynatrace-mcp-server@1.0.0"
 			],      
       "env": {
-				"DT_ENVIRONMENT": "${input:dt_environment}"
+				"DT_ENVIRONMENT": "https://vjg01043.apps.dynatrace.com"
 			},			
 			"version": "1.0.0"
     },

@@ -12,6 +12,17 @@ const { getFeatureFlag } = require('./common/openfeature');
 const { initializeRedis, set, get, del } = require('./common/redis');
 const { recordGameResult, recordScore } = require('./common/scoring');
 const Logger = require('./common/logger');
+const { 
+  initializeMetrics, 
+  recordGamePlay, 
+  recordGameWin, 
+  recordGameLoss, 
+  recordBetAmount, 
+  recordGameLatency 
+} = require('./common/metrics');
+
+// Initialize metrics for this service
+initializeMetrics('vegas-blackjack-service');
 
 // Helper function to extract metadata for trace context
 function extractMetadata(metadata) {
@@ -189,6 +200,9 @@ class BlackjackServiceImpl {
     const betAmount = bet_amount || 10;
     const Username = username || 'Anonymous';
 
+    // Track game start time for latency measurement
+    const gameStartTime = Date.now();
+
     // Log game start
     logger.logGameStart('blackjack', Username, betAmount, {
       action: 'deal'
@@ -279,6 +293,17 @@ class BlackjackServiceImpl {
           timestamp: new Date().toISOString(),
         },
       }).catch(err => console.warn('Failed to record game result:', err));
+      
+      // Record metrics for natural blackjack
+      const gameDuration = Date.now() - gameStartTime;
+      recordGamePlay('blackjack');
+      recordBetAmount('blackjack', betAmount);
+      recordGameLatency('blackjack', gameDuration);
+      if (gameState.result === 'blackjack' && gameState.payout > betAmount) {
+        recordGameWin('blackjack');
+      } else {
+        recordGameLoss('blackjack');
+      }
     }
 
     span.setAttributes({
@@ -548,6 +573,17 @@ class BlackjackServiceImpl {
         timestamp: new Date().toISOString(),
       },
     }).catch(err => console.warn('Failed to record game result:', err));
+    
+    // Record metrics for game completion
+    // Note: We don't have gameStartTime here since it was in Deal()
+    // This is acceptable as we're recording game plays and outcomes
+    recordGamePlay('blackjack');
+    recordBetAmount('blackjack', gameState.betAmount);
+    if (result === 'win') {
+      recordGameWin('blackjack');
+    } else {
+      recordGameLoss('blackjack');
+    }
 
     // Save final state immediately so frontend can fetch it if needed
     await saveGameState(Username, gameState);

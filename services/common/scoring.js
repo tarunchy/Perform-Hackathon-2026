@@ -14,6 +14,21 @@ const SCORING_SERVICE_URL = process.env.SCORING_SERVICE_URL || 'http://localhost
 const SERVICE_NAME = process.env.SERVICE_NAME || process.env.OTEL_SERVICE_NAME || 'vegas-service';
 const logger = new Logger(SERVICE_NAME);
 
+// Lazy load metrics to avoid circular dependencies
+let recordScoringLatency;
+function getMetrics() {
+  if (!recordScoringLatency) {
+    try {
+      const metrics = require('./metrics');
+      recordScoringLatency = metrics.recordScoringLatency;
+    } catch (e) {
+      // Metrics not available, use no-op
+      recordScoringLatency = () => {};
+    }
+  }
+  return { recordScoringLatency };
+}
+
 /**
  * Make HTTP request with trace context propagation
  */
@@ -112,6 +127,10 @@ async function recordGameResult(gameResult) {
       const startTime = Date.now();
       const response = await makeHttpRequest(url, { method: 'POST' }, payloadStr);
       const duration = Date.now() - startTime;
+      
+      // Record scoring latency metric
+      const { recordScoringLatency: recordLatency } = getMetrics();
+      recordLatency(gameResult.game, duration);
       
       // Log successful save
       logger.logInfo('Successfully saved game result to scoring API', {
